@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GRIND OS — Your Daily Operating System</title>
+<meta name="description" content="GRIND OS is your daily focus companion. Pomodoro timer, habit tracker, daily routine and motivational quotes. Stay locked in.">
+<meta name="theme-color" content="#c8f135">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --bg: #0a0a0a; --card: #111; --border: #1e1e1e; --accent: #c8f135; --accent2: #ff4d4d; --blue: #4dc8ff; --text: #f0f0f0; --muted: #555; }
+  body { background: var(--bg); color: var(--text); font-family: 'Space Mono', monospace; min-height: 100vh; padding: 20px; overflow-x: hidden; }
+  .container { max-width: 480px; margin: 0 auto; position: relative; z-index: 1; }
+  header { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:28px; border-bottom:1px solid var(--border); padding-bottom:16px; }
+  .logo { font-family:'Bebas Neue',sans-serif; font-size:2.5rem; color:var(--accent); letter-spacing:4px; line-height:1; }
+  .tagline { font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:2px; }
+  #clock { font-size:0.8rem; color:var(--muted); letter-spacing:2px; }
+  .quote-box { background:var(--card); border:1px solid var(--border); border-left:3px solid var(--accent); padding:14px 18px; margin-bottom:20px; font-size:0.7rem; color:#aaa; line-height:1.6; }
+  .quote-box span { display:block; color:var(--accent); font-size:0.58rem; margin-top:6px; letter-spacing:1px; }
+  .stats-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px; }
+  .stat-box { background:var(--card); border:1px solid var(--border); padding:14px 12px; text-align:center; }
+  .stat-num { font-family:'Bebas Neue',sans-serif; font-size:2rem; color:var(--accent); line-height:1; }
+  .stat-label { font-size:0.52rem; color:var(--muted); letter-spacing:1.5px; text-transform:uppercase; margin-top:4px; }
+  .timer-card { background:var(--card); border:1px solid var(--border); padding:28px 24px; margin-bottom:20px; text-align:center; position:relative; overflow:hidden; }
+  .timer-bar { position:absolute; top:0; left:0; height:2px; background:var(--accent); transition:width 1s linear; }
+  .timer-mode { font-size:0.58rem; letter-spacing:3px; color:var(--muted); text-transform:uppercase; margin-bottom:12px; }
+  .timer-display { font-family:'Bebas Neue',sans-serif; font-size:5.5rem; color:var(--accent); letter-spacing:6px; line-height:1; margin-bottom:8px; transition:color 0.3s; }
+  .timer-display.brk { color:var(--blue); }
+  .session-count { font-size:0.58rem; color:var(--muted); letter-spacing:2px; margin-bottom:18px; }
+  .dots { display:flex; justify-content:center; gap:6px; margin-bottom:20px; }
+  .dot { width:8px; height:8px; border-radius:50%; background:var(--border); border:1px solid var(--muted); transition:background 0.3s; }
+  .dot.done { background:var(--accent); border-color:var(--accent); }
+  .dot.active { background:var(--accent2); border-color:var(--accent2); animation:pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .timer-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  .btn { font-family:'Space Mono',monospace; font-size:0.68rem; letter-spacing:2px; text-transform:uppercase; padding:10px 20px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer; transition:all 0.15s; }
+  .btn:hover { border-color:var(--accent); color:var(--accent); }
+  .btn.primary { background:var(--accent); color:#000; border-color:var(--accent); font-weight:700; }
+  .btn.danger { border-color:var(--accent2); color:var(--accent2); }
+  .section-title { font-size:0.58rem; letter-spacing:3px; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+  .habits-card, .routine-card { background:var(--card); border:1px solid var(--border); padding:20px; margin-bottom:20px; }
+  .habit-item { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+  .habit-item:last-child { border-bottom:none; }
+  .habit-check { width:20px; height:20px; border:1px solid var(--muted); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:0.7rem; }
+  .habit-item.checked .habit-check { background:var(--accent); border-color:var(--accent); color:#000; }
+  .habit-label { font-size:0.7rem; color:#ccc; flex:1; }
+  .habit-item.checked .habit-label { color:var(--muted); text-decoration:line-through; }
+  .habit-emoji { font-size:1rem; }
+  .routine-item { display:flex; gap:14px; padding:8px 0; border-bottom:1px solid var(--border); }
+  .routine-item:last-child { border-bottom:none; }
+  .routine-time { font-size:0.63rem; color:var(--accent); min-width:72px; }
+  .routine-task { font-size:0.67rem; color:#bbb; line-height:1.5; }
+  .footer { text-align:center; font-size:0.55rem; color:var(--muted); letter-spacing:2px; padding:16px 0; border-top:1px solid var(--border); }
+  .notif { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--accent); color:#000; font-family:'Space Mono',monospace; font-size:0.68rem; font-weight:700; letter-spacing:2px; padding:12px 24px; z-index:100; transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1); text-transform:uppercase; white-space:nowrap; }
+  .notif.show { transform:translateX(-50%) translateY(0); }
+  .notif.brk { background:var(--blue); }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="logo">GRIND OS</div>
+      <div class="tagline">Your daily operating system 🔥</div>
+    </div>
+    <div id="clock"></div>
+  </header>
+  <div class="quote-box" id="quoteBox">Loading...</div>
+  <div class="stats-row">
+    <div class="stat-box"><div class="stat-num" id="statS">0</div><div class="stat-label">Sessions</div></div>
+    <div class="stat-box"><div class="stat-num" id="statH">0</div><div class="stat-label">Habits</div></div>
+    <div class="stat-box"><div class="stat-num" id="statStr">1</div><div class="stat-label">Day Streak</div></div>
+  </div>
+  <div class="timer-card" id="timerCard">
+    <div class="timer-bar" id="timerBar" style="width:100%"></div>
+    <div class="timer-mode" id="tMode">STUDY SESSION</div>
+    <div class="timer-display" id="tDisplay">45:00</div>
+    <div class="session-count" id="tCount">SESSION 1 OF 4</div>
+    <div class="dots">
+      <div class="dot active" id="d0"></div>
+      <div class="dot" id="d1"></div>
+      <div class="dot" id="d2"></div>
+      <div class="dot" id="d3"></div>
+    </div>
+    <div class="timer-btns">
+      <button class="btn primary" id="startBtn" onclick="toggleTimer()">START</button>
+      <button class="btn" onclick="resetTimer()">RESET</button>
+      <button class="btn danger" onclick="skipSession()">SKIP</button>
+    </div>
+  </div>
+  <div class="habits-card">
+    <div class="section-title">Today's Habits</div>
+    <div id="habitsList"></div>
+  </div>
+  <div class="routine-card">
+    <div class="section-title">Your Daily Routine</div>
+    <div class="routine-item"><div class="routine-time">3:50 AM</div><div class="routine-task">Wake up — wash face, drink water</div></div>
+    <div class="routine-item"><div class="routine-time">4:00 AM</div><div class="routine-task">Study block — homework & concepts</div></div>
+    <div class="routine-item"><div class="routine-time">5:30 AM</div><div class="routine-task">Exercise or walk</div></div>
+    <div class="routine-item"><div class="routine-time">6:00 AM</div><div class="routine-task">Get ready + breakfast</div></div>
+    <div class="routine-item"><div class="routine-time">8:55 AM</div><div class="routine-task">College — pay attention, take notes</div></div>
+    <div class="routine-item"><div class="routine-time">After Clg</div><div class="routine-task">1hr rest → 1-2hr study/assignments</div></div>
+    <div class="routine-item"><div class="routine-time">9:00 PM</div><div class="routine-task">No phone — wind down & sleep</div></div>
+  </div>
+  <div class="footer">GRIND OS — BE THE NEXT ELON 🔥</div>
+</div>
+<div class="notif" id="notif">Done!</div>
+<script>
+const quotes=[{t:"I could either watch it happen or be a part of it.",a:"Elon Musk"},{t:"Work like hell. Put in 80-100 hour weeks every week.",a:"Elon Musk"},{t:"Don't count the days, make the days count.",a:"Muhammad Ali"},{t:"Small daily improvements are the key to staggering long-term results.",a:"Robin Sharma"},{t:"You don't have to be great to start, but you have to start to be great.",a:"Zig Ziglar"},{t:"Discipline is doing what needs to be done, even if you don't want to.",a:"Unknown"},{t:"Dream big. Start small. Act now.",a:"Robin Sharma"},{t:"The secret of getting ahead is getting started.",a:"Mark Twain"}];
+const q=quotes[Math.floor(Math.random()*quotes.length)];
+document.getElementById('quoteBox').innerHTML=`"${q.t}"<span>— ${q.a}</span>`;
+setInterval(()=>{const n=new Date();document.getElementById('clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');},1000);
+const habitData=[{id:'hw',emoji:'📚',label:'Do homework on time'},{id:'ex',emoji:'💪',label:'Morning exercise / walk'},{id:'ph',emoji:'📵',label:'No phone during study'},{id:'wa',emoji:'💧',label:'Drink enough water'},{id:'sl',emoji:'😴',label:'Sleep by 9-10 PM'},{id:'rv',emoji:'🔁',label:"Review today's class notes"}];
+function today(){return new Date().toISOString().split('T')[0];}
+let habits=JSON.parse(localStorage.getItem('h_'+today())||'{}');
+function renderHabits(){
+  const l=document.getElementById('habitsList');l.innerHTML='';let done=0;
+  habitData.forEach(h=>{
+    const c=!!habits[h.id];if(c)done++;
+    const d=document.createElement('div');
+    d.className='habit-item'+(c?' checked':'');
+    d.innerHTML=`<div class="habit-emoji">${h.emoji}</div><div class="habit-label">${h.label}</div><div class="habit-check">${c?'✓':''}</div>`;
+    d.onclick=()=>{habits[h.id]=!habits[h.id];localStorage.setItem('h_'+today(),JSON.stringify(habits));renderHabits();updateStats();};
+    l.appendChild(d);
+  });
+  document.getElementById('statH').textContent=done;
+}
+renderHabits();
+const STUDY=45*60,BREAK=15*60,LONG=30*60,MAX=4;
+let left=STUDY,running=false,isBreak=false,sess=1,iv=null;
+let totalS=parseInt(localStorage.getItem('s_'+today())||'0');
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function uiTimer(){
+  document.getElementById('tDisplay').textContent=fmt(left);
+  document.getElementById('tDisplay').className='timer-display'+(isBreak?' brk':'');
+  document.getElementById('tMode').textContent=isBreak?(sess>MAX?'LONG BREAK 🔥':'BREAK TIME ☕'):'STUDY SESSION';
+  document.getElementById('tCount').textContent=`SESSION ${Math.min(sess,MAX)} OF ${MAX}`;
+  const total=isBreak?(sess>MAX?LONG:BREAK):STUDY;
+  document.getElementById('timerBar').style.width=`${(left/total)*100}%`;
+  document.getElementById('timerBar').style.background=isBreak?'#4dc8ff':'#c8f135';
+  [0,1,2,3].forEach(i=>{
+    const d=document.getElementById('d'+i);d.className='dot';
+    if(i<sess-1)d.classList.add('done');
+    else if(i===sess-1&&!isBreak)d.classList.add('active');
+  });
+}
+function toggleTimer(){
+  if(running){clearInterval(iv);running=false;document.getElementById('startBtn').textContent='RESUME';}
+  else{running=true;document.getElementById('startBtn').textContent='PAUSE';
+    iv=setInterval(()=>{left--;uiTimer();if(left<=0){clearInterval(iv);running=false;onEnd();}},1000);}
+}
+function onEnd(){
+  if(!isBreak){totalS++;localStorage.setItem('s_'+today(),totalS);updateStats();
+    showN(sess>=MAX?'4 done! Long break 🔥':'Session done! Break 💧',false);
+    isBreak=true;left=sess>=MAX?LONG:BREAK;if(sess>=MAX)sess=1;
+  }else{showN('Break over. Lock in! 💪',true);isBreak=false;sess=Math.min(sess+1,MAX);left=STUDY;}
+  document.getElementById('startBtn').textContent='START';uiTimer();
+}
+function resetTimer(){clearInterval(iv);running=false;isBreak=false;left=STUDY;sess=1;document.getElementById('startBtn').textContent='START';uiTimer();}
+function skipSession(){clearInterval(iv);running=false;onEnd();}
+function showN(msg,isS){
+  const n=document.getElementById('notif');n.textContent=msg;
+  n.className='notif show'+(isS?'':' brk');
+  setTimeout(()=>n.className='notif'+(isS?'':' brk'),3500);
+}
+function updateStats(){
+  document.getElementById('statS').textContent=totalS;
+  let streak=parseInt(localStorage.getItem('streak')||'1');
+  const last=localStorage.getItem('lastDay'),td=today();
+  if(last!==td){const y=new Date();y.setDate(y.getDate()-1);streak=last===y.toISOString().split('T')[0]?streak+1:1;localStorage.setItem('streak',streak);localStorage.setItem('lastDay',td);}
+  document.getElementById('statStr').textContent=streak;
+}
+updateStats();uiTimer();
+</script>
+</body>
+</html>
